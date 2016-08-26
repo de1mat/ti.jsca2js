@@ -15,7 +15,7 @@ class Formatter:
         return self
 
     def addLine(self, *args):
-        return self.add(self.indent).add(''.join(args)).newLine()
+        return self.add(self.indent).add(''.join([str(i) for i in args])).newLine()
 
     def newLine(self):
         return self.add('\n')
