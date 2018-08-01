@@ -88,7 +88,7 @@ def formatSince(decl):
     res = list()
     if 'platforms' in decl:
         for platform in decl['platforms']:
-            res.append(platform['since'] + ' (' + platform['pretty_name'] + ')')
+            res.append(platform['since'] + ' (' + platform['name'] + ')')
     else:
         return False
     return ', '.join(res)
@@ -273,7 +273,10 @@ def convertJsca2Js(jsca, version):
 
     javascript = ''
     for namespace in sorted(jsca.get("types")):
-        javascript += formatNamespace([namespace.get("name"), namespace])
+
+        n = ".".join(namespace.get("name").split(".")[:-1]) + ".create" + namespace.get("name").split(".")[-1]
+
+        javascript += formatNamespace([n, namespace])
 
     javascript = javascript.replace('Titanium.', 'Ti.')
     javascript = javascript.replace('.2DMatrix', '.D2Matrix')
