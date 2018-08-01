@@ -33,6 +33,13 @@ The `titanium-mobile.py` script can be used to create a JavaScript file for Tita
 will automatically fetch the `api.json` file from the Titanium Developer site (and cache it locally) and produce 
 the corresponding JavaScript file.
 
+JSCA files location
+----------------------------------
+You can find the files inside Titanium SDKs folder named api.jsca
+
+On Macs, for example:
+/Users/{YOUR USER}/Library/Application Support/Titanium/mobilesdk/osx/{TI SDK VERSION}
+
 ### Usage:
 
     titanium-mobile.py <titanium-version> (optional)<alloy-titanium-version>
