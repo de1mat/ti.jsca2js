@@ -273,10 +273,7 @@ def convertJsca2Js(jsca, version):
 
     javascript = ''
     for namespace in sorted(jsca.get("types")):
-
-        n = ".".join(namespace.get("name").split(".")[:-1]) + ".create" + namespace.get("name").split(".")[-1]
-
-        javascript += formatNamespace([n, namespace])
+        javascript += formatNamespace([namespace.get("name"), namespace])
 
     javascript = javascript.replace('Titanium.', 'Ti.')
     javascript = javascript.replace('.2DMatrix', '.D2Matrix')
