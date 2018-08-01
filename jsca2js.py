@@ -7,6 +7,7 @@ __status__ = "Development"
 
 import re
 from formatter import Formatter
+from pprint import pprint
 
 METHOD_INDENTATION = 4
 
@@ -60,7 +61,7 @@ def getPlatforms(platforms):
     res = list()
     for platform in platforms:
         if type(platform) is dict:
-            res.append(platform['pretty_name'])
+            res.append(platform['name'].split("Titanium Mobile SDK - ")[1])
         else:
             res.append(platform)
     return res
@@ -102,7 +103,7 @@ def generatePropertyJSDoc(property):
     if KEYS['value'] in property:
         formatter.addLine(prefix, property[KEYS['value']])
     if 'since' in property:
-        formatter.addLine(prefix, 'platforms: ', ', '.join(getPlatforms(property['platforms'])))
+        formatter.addLine(prefix, 'platforms: ', ', '.join(getPlatforms(property['since'])))
     formatter.addLine(prefix, '@type ', formatType(property['type']))
 
     sinceVer = formatSince(property)
@@ -172,7 +173,7 @@ def generateNamespaceJSDoc(namespace):
     if 'examples' in namespace:
         for example in namespace['examples']:
             formatter.addLine(prefix)
-            formatter.addLine(prefix, '@example ', example['description'])
+            formatter.addLine(prefix, '@example ', example['title'])
             formatter.addLine(prefix, example['code'])
 
     formatter.addLine(' */')
@@ -195,7 +196,9 @@ def formatProperties(namespace):
 
 def formatMethods(namespace):
     formatter = Formatter(METHOD_INDENTATION)
-    key = 'methods' if 'methods' in namespace else 'method'
+
+    key = 'functions' if 'functions' in namespace else 'function'
+
     for method in namespace[key]:
         formatter.add(generateMethodJSDoc(method))
         formatter.addLine(convertKey(method['name']), ':function(', formatParams(method['parameters']), ") {")
@@ -207,7 +210,7 @@ def formatMethods(namespace):
 def formatGlobal(namespace):
     formatter = Formatter(METHOD_INDENTATION)
 
-    for method in namespace['methods']:
+    for method in namespace['functions']:
         formatter.add(generateMethodJSDoc(method))
         formatter.addLine('function ', convertKey(method['name']), '(', formatParams(method['parameters']), ") {")
         formatter.addLine('}')
@@ -218,7 +221,7 @@ def formatGlobal(namespace):
 def extendGlobal(name, namespace):
     formatter = Formatter(METHOD_INDENTATION)
 
-    for method in namespace['methods']:
+    for method in namespace['functions']:
         formatter.add(generateMethodJSDoc(method))
         formatter.addLine(name, '.prototype.', convertKey(method['name']), ' = function(',
                           formatParams(method['parameters']), ") {")
@@ -269,8 +272,8 @@ def convertJsca2Js(jsca, version):
         KEYS['description'] = 'description'
 
     javascript = ''
-    for namespace in sorted(jsca.items()):
-        javascript += formatNamespace(namespace)
+    for namespace in sorted(jsca.get("types")):
+        javascript += formatNamespace([namespace.get("name"), namespace])
 
     javascript = javascript.replace('Titanium.', 'Ti.')
     javascript = javascript.replace('.2DMatrix', '.D2Matrix')
