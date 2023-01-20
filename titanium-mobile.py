@@ -16,44 +16,24 @@ DEFAULT_HTTP_TIMEOUT_SECS = 10
 
 TITANIUM_VERSION_REGEX = re.compile('\d\.\d\.\d')
 
-starts_with = ('5.','4.','3.','2.')
 
-def retrieveJsca(version, module='titanium'):
-    if version.startswith(starts_with):
-        url = 'http://docs.appcelerator.com/titanium/data/' + version + '/'
-    else:
-        url = 'http://developer.appcelerator.com/apidoc/mobile/' + version + '/'
+def retrieveJsca(path, version):
+    localfile = path + '/api.jsca'
 
-    url += 'api.json' if module == 'titanium' else module + '_api.json'
-
-    cache = 'titanium-js/api-' + module.lower() + '-' + version + '.json'
+    print('Retrieving Titanium JSCA API for version: ' + version)
 
     try:
-        if not os.path.isfile(cache):
-            def reporthook(blocknum, blocksize, totalsize):
-                readsofar = blocknum * blocksize
-                if totalsize > 0:
-                    percent = readsofar * 1e2 / totalsize
-                    s = "\r%5.1f%% %*d / %d" % (
-                        percent, len(str(totalsize)), readsofar, totalsize)
-                    sys.stderr.write(s)
-                    if readsofar >= totalsize: # near the end
-                        sys.stderr.write("\n")
-                else: # total size is unknown
-                    sys.stderr.write("read %d\n" % (readsofar,))
+        if not os.path.isfile(localfile):
+            sys.stderr.write("ERROR: Cannot locate the installed SDK at " + localfile)
+            sys.exit(1)
 
-            urllib.urlretrieve(url, cache, reporthook)
-
-        file    = open(cache, 'r')
+        file = open(localfile, 'r')
         content = file.read()
         file.close()
 
         return json.JSONDecoder().decode(content)
     except Exception as e:
-        if module == 'titanium':
-            errStr = 'Unable to retrieve API for Titanium version ' + version
-        else:
-            errStr = module + ' was not found'
+        errStr = version + ' was not found'
 
         raise Exception(errStr)
 
@@ -61,10 +41,10 @@ def retrieveJsca(version, module='titanium'):
 def writeJsFile(content, filepath):
     try:
         file = open(filepath, 'w')
-        file.write(content.encode('utf-8'))
+        file.write(content)
         file.close()
     except IOError:
-        raise Exception('Unable to write JavaScript to file: ' + TITANIUM_JS_FILE_PATH)
+        raise Exception('Unable to write JavaScript to ' + filepath)
 
 
 def errorExit(message=None):
@@ -72,43 +52,19 @@ def errorExit(message=None):
         sys.stderr.write(message + '\n')
     sys.exit(1)
 
-#
-# Function tries to find Alloy framework files with the same version which 
-# Titanium have. If it finds - download it and convert it too
-#
-def tryFindAlloy(version):
-    print 'Searching for Alloy Framework corresponding to Titanium version ' + version
-
-    try:
-        jsca = retrieveJsca(version,'alloy')
-    except Exception, e:
-        errorExit('Not found for this version')
-
-    print('Converting API to JavaScript')
-    javascript = convertJsca2Js(jsca, version)
-
-    outputFilePath = 'titanium-js/titanium-mobile-alloy-' + version + '.js'
-    print('Writing JavaScript to file: ' + outputFilePath)
-    writeJsFile(javascript, outputFilePath)
 
 def main():
     if len(sys.argv) < 2 or len(sys.argv) > 3:
-        errorExit('USAGE: ' + sys.argv[0] + ' <titanium-version> (optional)<alloy-titanium-version>')
+        errorExit('USAGE: ' + sys.argv[0] + ' <path-to-local-sdk>')
 
-    version = sys.argv[1]
+    path = sys.argv[1]
 
-    if len(sys.argv) > 2:
-        alloy_version = sys.argv[2]
-    else:
-        alloy_version = version
+    # get last part of the path
+    version = path.split('/')[-1];
 
-    if not TITANIUM_VERSION_REGEX.match(version):
-        errorExit('ERROR: Invalid titanium version specified. Must be in the format X.X.X')
-
-    print('Retrieving Titanium JSCA API for version: ' + version)
     try:
-        jsca = retrieveJsca(version)
-    except Exception, e:
+        jsca = retrieveJsca(path, version)
+    except Exception as e:
         errorExit(str(e))
 
     print('Converting API to JavaScript')
@@ -118,13 +74,11 @@ def main():
     print('Writing JavaScript to file: ' + outputFilePath)
     writeJsFile(javascript, outputFilePath)
 
-    tryFindAlloy(alloy_version)
 
 if __name__ == '__main__':
-    #try:
-        main()
-        print 'Conversion completed successfully'
-    #except Exception as e:
-    #    print('ERROR: ' + e.message)
-    #    sys.exit(1)
-
+    # try:
+    main()
+    print('Conversion completed successfully')
+# except Exception as e:
+#    print('ERROR: ' + e.message)
+#    sys.exit(1)

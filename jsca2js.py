@@ -7,7 +7,6 @@ __status__ = "Development"
 
 import re
 from formatter import Formatter
-from pprint import pprint
 
 METHOD_INDENTATION = 4
 
@@ -231,8 +230,8 @@ def extendGlobal(name, namespace):
 
 
 def formatNamespace(namespace):
-    namespaceName = convertIds(namespace[0])
-    namespaceContent = namespace[1]
+    namespaceName = convertIds(namespace.get('name', ''))
+    namespaceContent = namespace
 
     formatter = Formatter()
     formatter.add(generateNamespaceJSDoc(namespaceContent))
@@ -272,8 +271,9 @@ def convertJsca2Js(jsca, version):
         KEYS['description'] = 'description'
 
     javascript = ''
-    for namespace in sorted(jsca.get("types")):
-        javascript += formatNamespace([namespace.get("name"), namespace])
+
+    for namespace in sorted(jsca.get("types"), key=lambda x: x.get('name')):
+        javascript += formatNamespace(namespace)
 
     javascript = javascript.replace('Titanium.', 'Ti.')
     javascript = javascript.replace('.2DMatrix', '.D2Matrix')
